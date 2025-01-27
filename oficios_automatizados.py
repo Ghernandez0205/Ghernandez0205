@@ -15,7 +15,7 @@ OUTPUT_FOLDER_BASE = "output_oficios"
 if not os.path.exists(OUTPUT_FOLDER_BASE):
     os.makedirs(OUTPUT_FOLDER_BASE)
 
-# Función para generar los archivos Word individuales
+# Función para generar archivos Word individuales
 def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emision, comision):
     docx_files = []
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
