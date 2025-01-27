@@ -155,3 +155,4 @@ if os.path.exists(REGISTRO_PATH):
             file_name="registro_dias_economicos.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
