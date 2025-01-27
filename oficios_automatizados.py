@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
-from docx import Document
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from PyPDF2 import PdfMerger
+from aspose.words import Document as AsposeDocument
 import os
 from datetime import datetime
 
@@ -29,48 +26,33 @@ def generar_oficio(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emis
         apellido_materno = row["APELLIDO MATERNO"]
         rfc = row["R.F.C. CON HOMONIMIA"]
 
-        # Cargar la plantilla
-        doc = Document(TEMPLATE_PATH)
+        # Cargar el documento Word con Aspose.Words
+        doc = AsposeDocument(TEMPLATE_PATH)
 
         # Reemplazar texto en la plantilla
-        for para in doc.paragraphs:
-            para.text = para.text.replace("numero_oficio", num_oficio)
-            para.text = para.text.replace("nombre", nombre)
-            para.text = para.text.replace("apellido_paterno", apellido_paterno)
-            para.text = para.text.replace("apellido_materno", apellido_materno)
-            para.text = para.text.replace("rfc", rfc)
-            para.text = para.text.replace("sede", sede)
-            para.text = para.text.replace("ubicacion", ubicacion)
-            para.text = para.text.replace("fecha", fecha)
-            para.text = para.text.replace("horario", horario)
-            para.text = para.text.replace("fecha_emision", fecha_emision)
-            para.text = para.text.replace("comision", comision)
+        doc.range.replace("numero_oficio", num_oficio, False, False)
+        doc.range.replace("nombre", nombre, False, False)
+        doc.range.replace("apellido_paterno", apellido_paterno, False, False)
+        doc.range.replace("apellido_materno", apellido_materno, False, False)
+        doc.range.replace("rfc", rfc, False, False)
+        doc.range.replace("sede", sede, False, False)
+        doc.range.replace("ubicacion", ubicacion, False, False)
+        doc.range.replace("fecha", fecha, False, False)
+        doc.range.replace("horario", horario, False, False)
+        doc.range.replace("fecha_emision", fecha_emision, False, False)
+        doc.range.replace("comision", comision, False, False)
 
-        # Guardar archivo temporal .docx
-        output_docx = os.path.join(output_folder, f'oficio_{rfc}.docx')
-        doc.save(output_docx)
-
-        # Crear el PDF desde cero con ReportLab
+        # Guardar como PDF
         output_pdf = os.path.join(output_folder, f'oficio_{rfc}.pdf')
-        c = canvas.Canvas(output_pdf, pagesize=letter)
-        c.drawString(100, 750, f"Oficio Número: {num_oficio}")
-        c.drawString(100, 730, f"Nombre: {nombre} {apellido_paterno} {apellido_materno}")
-        c.drawString(100, 710, f"RFC: {rfc}")
-        c.drawString(100, 690, f"Sede: {sede}")
-        c.drawString(100, 670, f"Ubicación: {ubicacion}")
-        c.drawString(100, 650, f"Fecha: {fecha}")
-        c.drawString(100, 630, f"Horario: {horario}")
-        c.drawString(100, 610, f"Fecha de Emisión: {fecha_emision}")
-        c.drawString(100, 590, f"Comisión: {comision}")
-        c.save()
-
+        doc.save(output_pdf)
         pdf_files.append(output_pdf)
 
-    # Combinar PDFs
+    # Combinar PDFs si es necesario
+    combined_pdf_path = os.path.join(output_folder, f"Oficios_Combinados_{timestamp}.pdf")
+    from PyPDF2 import PdfMerger
     merger = PdfMerger()
     for pdf in pdf_files:
         merger.append(pdf)
-    combined_pdf_path = os.path.join(output_folder, f"Oficios_Combinados_{timestamp}.pdf")
     merger.write(combined_pdf_path)
     merger.close()
 
@@ -129,4 +111,3 @@ if st.button("Generar Oficios"):
         )
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button("Descargar Oficios Combinados", open(result_pdf, "rb"), file_name="Oficios_Combinados.pdf")
-

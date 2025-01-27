@@ -1,6 +1,6 @@
 streamlit
 pandas
 python-docx
-reportlab
 PyPDF2
 openpyxl
+aspose-words
