@@ -30,17 +30,22 @@ def generar_oficio(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emis
         doc = AsposeDocument(TEMPLATE_PATH)
 
         # Reemplazar texto en la plantilla
-        doc.range.replace("numero_oficio", num_oficio, False, False)
-        doc.range.replace("nombre", nombre, False, False)
-        doc.range.replace("apellido_paterno", apellido_paterno, False, False)
-        doc.range.replace("apellido_materno", apellido_materno, False, False)
-        doc.range.replace("rfc", rfc, False, False)
-        doc.range.replace("sede", sede, False, False)
-        doc.range.replace("ubicacion", ubicacion, False, False)
-        doc.range.replace("fecha", fecha, False, False)
-        doc.range.replace("horario", horario, False, False)
-        doc.range.replace("fecha_emision", fecha_emision, False, False)
-        doc.range.replace("comision", comision, False, False)
+        replacements = {
+            "numero_oficio": num_oficio,
+            "nombre": nombre,
+            "apellido_paterno": apellido_paterno,
+            "apellido_materno": apellido_materno,
+            "rfc": rfc,
+            "sede": sede,
+            "ubicacion": ubicacion,
+            "fecha": fecha,
+            "horario": horario,
+            "fecha_emision": fecha_emision,
+            "comision": comision,
+        }
+
+        for key, value in replacements.items():
+            doc.range.replace(key, value)
 
         # Guardar como PDF
         output_pdf = os.path.join(output_folder, f'oficio_{rfc}.pdf')
@@ -111,3 +116,4 @@ if st.button("Generar Oficios"):
         )
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button("Descargar Oficios Combinados", open(result_pdf, "rb"), file_name="Oficios_Combinados.pdf")
+
