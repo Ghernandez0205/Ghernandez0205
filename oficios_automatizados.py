@@ -9,6 +9,7 @@ from io import BytesIO
 # Configuración de rutas
 TEMPLATE_PATH = "001 OFICIO ciclo escolar 2024-2025.docx"
 EXCEL_PATH = "PLANTILLA 29D AUDITORIA.xlsx"
+REGISTRO_PATH = "registro_dias_economicos.xlsx"
 OUTPUT_FOLDER_BASE = "output_oficios"
 
 # Crear carpeta de salida si no existe
@@ -52,6 +53,26 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
 
     return docx_files
 
+# Función para registrar los oficios generados
+def registrar_oficios(fecha_actividad, docentes, actividad):
+    # Verificar si el registro ya existe
+    if os.path.exists(REGISTRO_PATH):
+        registro_df = pd.read_excel(REGISTRO_PATH)
+    else:
+        # Crear un archivo nuevo si no existe
+        registro_df = pd.DataFrame(columns=["Fecha de Actividad", "Docentes", "Actividad"])
+
+    # Registrar la nueva entrada
+    nueva_entrada = {
+        "Fecha de Actividad": fecha_actividad,
+        "Docentes": ", ".join(docentes),
+        "Actividad": actividad,
+    }
+    registro_df = registro_df.append(nueva_entrada, ignore_index=True)
+
+    # Guardar el registro actualizado
+    registro_df.to_excel(REGISTRO_PATH, index=False)
+
 # Función para comprimir los archivos en un ZIP
 def comprimir_archivos(archivos):
     buffer = BytesIO()
@@ -93,15 +114,18 @@ sede = st.text_input("Sede")
 ubicacion = st.text_input("Ubicación")
 fecha = st.date_input("Fecha de Comisión")
 horario = st.text_input("Horario")
-fecha_emision = st.date_input("Fecha de Emisión")
+fecha_emision = st.text_input("Fecha de Emisión (por ejemplo: 15 de enero del 2025)", placeholder="15 de enero del 2025")
 comision = st.text_input("Comisión")
 
 # Botón para generar oficios individuales
 if st.button("Generar Oficios"):
     if not selected_rows:
         st.warning("Por favor selecciona al menos un docente.")
+    elif not fecha_emision.strip():
+        st.warning("Por favor ingresa una fecha de emisión válida.")
     else:
         data_to_process = df.loc[selected_rows]
+        docentes = df.loc[selected_rows, "NOMBRE (S)"].tolist()
         docx_files = generar_oficios(
             data_to_process,
             num_oficio,
@@ -109,9 +133,10 @@ if st.button("Generar Oficios"):
             ubicacion,
             fecha.strftime("%d/%m/%Y"),
             horario,
-            fecha_emision.strftime("%d/%m/%Y"),
+            fecha_emision.strip(),
             comision,
         )
+        registrar_oficios(fecha.strftime("%d/%m/%Y"), docentes, comision)
         zip_buffer = comprimir_archivos(docx_files)
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
@@ -119,4 +144,14 @@ if st.button("Generar Oficios"):
             data=zip_buffer,
             file_name="Oficios_Generados.zip",
             mime="application/zip",
+        )
+
+# Botón para descargar el registro
+if os.path.exists(REGISTRO_PATH):
+    with open(REGISTRO_PATH, "rb") as registro:
+        st.download_button(
+            label="Descargar Registro de Días Económicos",
+            data=registro,
+            file_name="registro_dias_economicos.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
