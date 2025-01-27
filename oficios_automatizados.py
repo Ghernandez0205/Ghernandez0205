@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from docx import Document
-from docx2pdf import convert
+from pypandoc import convert
 from PyPDF2 import PdfMerger
 import os
 from datetime import datetime
