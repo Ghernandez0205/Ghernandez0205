@@ -1,6 +1,6 @@
 streamlit
 pandas
 python-docx
-pypandoc
+reportlab
 PyPDF2
 openpyxl

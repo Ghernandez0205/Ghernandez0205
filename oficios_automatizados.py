@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 from docx import Document
-from pypandoc import convert
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from PyPDF2 import PdfMerger
 import os
 from datetime import datetime
@@ -15,19 +16,20 @@ OUTPUT_FOLDER_BASE = "output_oficios"
 if not os.path.exists(OUTPUT_FOLDER_BASE):
     os.makedirs(OUTPUT_FOLDER_BASE)
 
-# Función para generar los oficios
+# Función para generar los PDFs
 def generar_oficio(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emision, comision):
     pdf_files = []
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_folder = os.path.join(OUTPUT_FOLDER_BASE, f'Oficios_{timestamp}')
     os.makedirs(output_folder)
-    
+
     for index, row in data.iterrows():
         nombre = row["NOMBRE (S)"]
         apellido_paterno = row["APELLIDO PATERNO"]
         apellido_materno = row["APELLIDO MATERNO"]
         rfc = row["R.F.C. CON HOMONIMIA"]
 
+        # Cargar la plantilla
         doc = Document(TEMPLATE_PATH)
 
         # Reemplazar texto en la plantilla
@@ -44,12 +46,24 @@ def generar_oficio(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emis
             para.text = para.text.replace("fecha_emision", fecha_emision)
             para.text = para.text.replace("comision", comision)
 
-        # Guardar archivo .docx y convertir a PDF
+        # Guardar archivo temporal .docx
         output_docx = os.path.join(output_folder, f'oficio_{rfc}.docx')
         doc.save(output_docx)
-        convert(output_docx)
 
-        output_pdf = output_docx.replace(".docx", ".pdf")
+        # Crear el PDF desde cero con ReportLab
+        output_pdf = os.path.join(output_folder, f'oficio_{rfc}.pdf')
+        c = canvas.Canvas(output_pdf, pagesize=letter)
+        c.drawString(100, 750, f"Oficio Número: {num_oficio}")
+        c.drawString(100, 730, f"Nombre: {nombre} {apellido_paterno} {apellido_materno}")
+        c.drawString(100, 710, f"RFC: {rfc}")
+        c.drawString(100, 690, f"Sede: {sede}")
+        c.drawString(100, 670, f"Ubicación: {ubicacion}")
+        c.drawString(100, 650, f"Fecha: {fecha}")
+        c.drawString(100, 630, f"Horario: {horario}")
+        c.drawString(100, 610, f"Fecha de Emisión: {fecha_emision}")
+        c.drawString(100, 590, f"Comisión: {comision}")
+        c.save()
+
         pdf_files.append(output_pdf)
 
     # Combinar PDFs
@@ -72,8 +86,17 @@ if password != "defvm11":
     st.stop()
 
 # Cargar los datos desde Excel
-df = pd.read_excel(EXCEL_PATH)
-selected_rows = st.multiselect("Selecciona los docentes", df.index, format_func=lambda i: f"{df.loc[i, 'NOMBRE (S)']} {df.loc[i, 'APELLIDO PATERNO']} {df.loc[i, 'APELLIDO MATERNO']}")
+try:
+    df = pd.read_excel(EXCEL_PATH)
+except FileNotFoundError:
+    st.error("El archivo de plantilla no se encuentra. Por favor, súbelo y asegúrate de que la ruta sea correcta.")
+    st.stop()
+
+selected_rows = st.multiselect(
+    "Selecciona los docentes",
+    df.index,
+    format_func=lambda i: f"{df.loc[i, 'NOMBRE (S)']} {df.loc[i, 'APELLIDO PATERNO']} {df.loc[i, 'APELLIDO MATERNO']}"
+)
 
 if selected_rows:
     st.write("Docentes seleccionados:")
@@ -106,3 +129,4 @@ if st.button("Generar Oficios"):
         )
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button("Descargar Oficios Combinados", open(result_pdf, "rb"), file_name="Oficios_Combinados.pdf")
+
