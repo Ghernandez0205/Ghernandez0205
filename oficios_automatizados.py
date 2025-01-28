@@ -52,7 +52,7 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha_comision, horario, 
             para.text = para.text.replace("rfc", rfc)
             para.text = para.text.replace("sede", sede)
             para.text = para.text.replace("ubicacion", ubicacion)
-            para.text = para.text.replace("fecha", formatear_fecha(fecha_comision))
+            para.text = para.text.replace("fecha_comision", formatear_fecha(fecha_comision))
             para.text = para.text.replace("horario", horario)
             para.text = para.text.replace("fecha_emision", formatear_fecha(fecha_emision))
             para.text = para.text.replace("comision", comision)
@@ -65,14 +65,14 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha_comision, horario, 
     return docx_files
 
 # Función para registrar los oficios generados en Excel
-def registrar_oficios(fecha_actividad, docentes, actividad, fecha_emision):
+def registrar_oficios(fecha_comision, docentes, actividad, fecha_emision):
     if os.path.exists(REGISTRO_PATH):
         registro_df = pd.read_excel(REGISTRO_PATH)
     else:
-        registro_df = pd.DataFrame(columns=["Fecha de Actividad", "Docentes", "Actividad", "Fecha de Emisión"])
+        registro_df = pd.DataFrame(columns=["Fecha de Comisión", "Docentes", "Actividad", "Fecha de Emisión"])
 
     nueva_entrada = {
-        "Fecha de Actividad": fecha_actividad,
+        "Fecha de Comisión": fecha_comision,
         "Docentes": ", ".join(docentes),
         "Actividad": actividad,
         "Fecha de Emisión": fecha_emision,
@@ -91,7 +91,7 @@ def comprimir_archivos(archivos):
     return buffer
 
 # Interfaz en Streamlit
-st.title("Generador de Oficios en Word con Fechas Formateadas")
+st.title("Generador de Oficios con Fechas Diferenciadas")
 
 # Verificar contraseña
 password = st.text_input("Ingrese la contraseña", type="password")
