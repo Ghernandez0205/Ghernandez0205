@@ -29,7 +29,7 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
         apellido_materno = row["APELLIDO MATERNO"]
         rfc = row["R.F.C. CON HOMONIMIA"]
 
-        # Crear el documento Word desde la plantilla
+        # Copiar la plantilla para generar el documento
         doc = Document(TEMPLATE_PATH)
 
         # Reemplazar texto en la plantilla
@@ -46,7 +46,7 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
             para.text = para.text.replace("fecha_emision", fecha_emision)
             para.text = para.text.replace("comision", comision)
 
-        # Guardar el archivo Word
+        # Guardar el documento Word
         output_docx = os.path.join(output_folder, f'oficio_{rfc}.docx')
         doc.save(output_docx)
         docx_files.append(output_docx)
@@ -54,21 +54,22 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
     return docx_files
 
 # Función para registrar los oficios generados
-def registrar_oficios(fecha_actividad, docentes, actividad):
+def registrar_oficios(fecha_actividad, docentes, actividad, fecha_emision):
     # Verificar si el registro ya existe
     if os.path.exists(REGISTRO_PATH):
         registro_df = pd.read_excel(REGISTRO_PATH)
     else:
         # Crear un archivo nuevo si no existe
-        registro_df = pd.DataFrame(columns=["Fecha de Actividad", "Docentes", "Actividad"])
+        registro_df = pd.DataFrame(columns=["Fecha de Actividad", "Docentes", "Actividad", "Fecha de Emisión"])
 
     # Registrar la nueva entrada
     nueva_entrada = {
         "Fecha de Actividad": fecha_actividad,
         "Docentes": ", ".join(docentes),
         "Actividad": actividad,
+        "Fecha de Emisión": fecha_emision,
     }
-    registro_df = registro_df.append(nueva_entrada, ignore_index=True)
+    registro_df = pd.concat([registro_df, pd.DataFrame([nueva_entrada])], ignore_index=True)
 
     # Guardar el registro actualizado
     registro_df.to_excel(REGISTRO_PATH, index=False)
@@ -136,7 +137,7 @@ if st.button("Generar Oficios"):
             fecha_emision.strip(),
             comision,
         )
-        registrar_oficios(fecha.strftime("%d/%m/%Y"), docentes, comision)
+        registrar_oficios(fecha.strftime("%d/%m/%Y"), docentes, comision, fecha_emision.strip())
         zip_buffer = comprimir_archivos(docx_files)
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
@@ -155,4 +156,3 @@ if os.path.exists(REGISTRO_PATH):
             file_name="registro_dias_economicos.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-
