@@ -45,17 +45,17 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha_comision, horario, 
 
         # Reemplazar texto en la plantilla
         for para in doc.paragraphs:
-            para.text = para.text.replace("numero_oficio", num_oficio)
-            para.text = para.text.replace("nombre", nombre)
-            para.text = para.text.replace("apellido_paterno", apellido_paterno)
-            para.text = para.text.replace("apellido_materno", apellido_materno)
-            para.text = para.text.replace("rfc", rfc)
-            para.text = para.text.replace("sede", sede)
-            para.text = para.text.replace("ubicacion", ubicacion)
-            para.text = para.text.replace("fecha", formatear_fecha(fecha_comision))
-            para.text = para.text.replace("horario", horario)
-            para.text = para.text.replace("fecha_de_emision", formatear_fecha(fecha_emision))
-            para.text = para.text.replace("comision", comision)
+            para.text = para.text.replace("{{numero_oficio}}", num_oficio)
+            para.text = para.text.replace("{{nombre}}", nombre)
+            para.text = para.text.replace("{{apellido_paterno}}", apellido_paterno)
+            para.text = para.text.replace("{{apellido_materno}}", apellido_materno)
+            para.text = para.text.replace("{{rfc}}", rfc)
+            para.text = para.text.replace("{{sede}}", sede)
+            para.text = para.text.replace("{{ubicacion}}", ubicacion)
+            para.text = para.text.replace("{{fecha_comision}}", formatear_fecha(fecha_comision))
+            para.text = para.text.replace("{{horario}}", horario)
+            para.text = para.text.replace("{{fecha_emision}}", formatear_fecha(fecha_emision))
+            para.text = para.text.replace("{{comision}}", comision)
 
         # Guardar el archivo Word
         output_docx = os.path.join(output_folder, f'oficio_{rfc}.docx')
@@ -166,3 +166,4 @@ if os.path.exists(REGISTRO_PATH):
             file_name="registro_oficios_comision.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
