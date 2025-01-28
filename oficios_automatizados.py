@@ -54,7 +54,7 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha_comision, horario, 
             para.text = para.text.replace("ubicacion", ubicacion)
             para.text = para.text.replace("fecha", formatear_fecha(fecha_comision))
             para.text = para.text.replace("horario", horario)
-            para.text = para.text.replace("fecha de emision", formatear_fecha(fecha_emision))
+            para.text = para.text.replace("fecha_de_emision", formatear_fecha(fecha_emision))
             para.text = para.text.replace("comision", comision)
 
         # Guardar el archivo Word
@@ -91,7 +91,7 @@ def comprimir_archivos(archivos):
     return buffer
 
 # Interfaz en Streamlit
-st.title("Generador de Oficios en Word con Fechas Diferenciadas")
+st.title("Generador de Oficios con Fechas Corregidas")
 
 # Verificar contraseña
 password = st.text_input("Ingrese la contraseña", type="password")
@@ -166,3 +166,4 @@ if os.path.exists(REGISTRO_PATH):
             file_name="registro_oficios_comision.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
