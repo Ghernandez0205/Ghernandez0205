@@ -167,3 +167,4 @@ if os.path.exists(REGISTRO_PATH):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
+
