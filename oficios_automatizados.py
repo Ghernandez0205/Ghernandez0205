@@ -27,6 +27,46 @@ def formatear_fecha(fecha):
     anio = fecha.year
     return f"{dia} de {mes} del {anio}"
 
+# Función para generar oficios
+def generar_oficio(datos, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision):
+    archivos_generados = []
+    for _, fila in datos.iterrows():
+        nombre = fila['NOMBRE (S)']
+        apellido_paterno = fila['APELLIDO PATERNO']
+        apellido_materno = fila['APELLIDO MATERNO']
+        rfc = fila['R.F.C. CON HOMONIMIA']
+
+        # Crear el documento Word
+        doc = Document(TEMPLATE_PATH)
+        for p in doc.paragraphs:
+            p.text = p.text.replace("{{numero_oficio}}", num_oficio)
+            p.text = p.text.replace("{{nombre}}", nombre)
+            p.text = p.text.replace("{{apellido_paterno}}", apellido_paterno)
+            p.text = p.text.replace("{{apellido_materno}}", apellido_materno)
+            p.text = p.text.replace("{{rfc}}", rfc)
+            p.text = p.text.replace("{{sede}}", sede)
+            p.text = p.text.replace("{{ubicacion}}", ubicacion)
+            p.text = p.text.replace("{{fecha}}", formatear_fecha(fecha_comision))
+            p.text = p.text.replace("{{horario}}", horario)
+            p.text = p.text.replace("{{fecha_emision}}", formatear_fecha(fecha_emision))
+            p.text = p.text.replace("{{comision}}", comision)
+
+        # Guardar el archivo Word
+        nombre_archivo = f"oficio_{rfc}.docx"
+        ruta_archivo = os.path.join(OUTPUT_FOLDER_BASE, nombre_archivo)
+        doc.save(ruta_archivo)
+        archivos_generados.append(ruta_archivo)
+    return archivos_generados
+
+# Función para comprimir archivos en un ZIP
+def comprimir_archivos(archivos):
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for archivo in archivos:
+            zipf.write(archivo, os.path.basename(archivo))
+    zip_buffer.seek(0)
+    return zip_buffer
+
 # Interfaz en Streamlit
 st.set_page_config(page_title="Generador de Oficios", page_icon="📄")
 st.title("📄 Generador de Oficios en Word")
@@ -69,16 +109,15 @@ if st.button("Generar Oficios"):
         st.warning("Por favor selecciona al menos un docente.")
     else:
         data_to_process = df.loc[selected_rows]
-        docentes = df.loc[selected_rows, "NOMBRE (S)"].tolist()
-        # Aquí irían las funciones para generar los oficios y registrar en Excel
-        st.success("🎉 Oficios generados con éxito. Descárgalos a continuación:")
-
-# Botón para descargar el registro
-if os.path.exists(REGISTRO_PATH):
-    with open(REGISTRO_PATH, "rb") as registro:
-        st.download_button(
-            label="📊 Descargar Registro de Oficios",
-            data=registro,
-            file_name="registro_oficios_comision.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        archivos_generados = generar_oficio(
+            data_to_process, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision
         )
+        zip_buffer = comprimir_archivos(archivos_generados)
+        st.success("🎉 Oficios generados con éxito. Descárgalos a continuación:")
+        st.download_button(
+            label="📥 Descargar Oficios Comprimidos (ZIP)",
+            data=zip_buffer,
+            file_name="oficios_comprimidos.zip",
+            mime="application/zip"
+        )
+
