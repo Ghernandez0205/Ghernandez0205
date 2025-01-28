@@ -9,8 +9,8 @@ from io import BytesIO
 # Configuración de rutas
 TEMPLATE_PATH = "001 OFICIO ciclo escolar 2024-2025.docx"
 EXCEL_PATH = "PLANTILLA 29D AUDITORIA.xlsx"
-REGISTRO_PATH = "registro_oficios_comision.xlsx"
 OUTPUT_FOLDER_BASE = "output_oficios"
+REGISTRO_PATH = "registro_oficios_comision.xlsx"
 
 # Crear carpeta de salida si no existe
 if not os.path.exists(OUTPUT_FOLDER_BASE):
@@ -112,7 +112,11 @@ if st.button("Generar Oficios"):
         archivos_generados = generar_oficio(
             data_to_process, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision
         )
+
+        # Crear archivo ZIP
         zip_buffer = comprimir_archivos(archivos_generados)
+        
+        # Mostrar opciones de descarga
         st.success("🎉 Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
             label="📥 Descargar Oficios Comprimidos (ZIP)",
@@ -120,4 +124,16 @@ if st.button("Generar Oficios"):
             file_name="oficios_comprimidos.zip",
             mime="application/zip"
         )
+
+        # Guardar en una carpeta específica del PC
+        guardar_local = st.checkbox("Guardar oficios en carpeta local")
+        if guardar_local:
+            destino_local = st.text_input("🖥️ Carpeta de destino (ejemplo: C:/OficiosGenerados):")
+            if st.button("Guardar en Carpeta"):
+                try:
+                    for archivo in archivos_generados:
+                        os.rename(archivo, os.path.join(destino_local, os.path.basename(archivo)))
+                    st.success(f"Archivos guardados en: {destino_local}")
+                except Exception as e:
+                    st.error(f"Error al guardar los archivos: {e}")
 
