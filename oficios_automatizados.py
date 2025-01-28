@@ -91,10 +91,14 @@ def comprimir_archivos(archivos):
     return buffer
 
 # Interfaz en Streamlit
-st.title("Generador de Oficios con Fechas Corregidas")
+st.set_page_config(page_title="Generador de Oficios", page_icon="📄")
+st.title("📄 Generador de Oficios en Word")
+
+# Agregar una imagen de encabezado
+st.image("encabezado.png", use_column_width=True)
 
 # Verificar contraseña
-password = st.text_input("Ingrese la contraseña", type="password")
+password = st.text_input("🔒 Ingrese la contraseña", type="password")
 if password != "defvm11":
     st.warning("Ingrese la contraseña correcta para continuar.")
     st.stop()
@@ -107,23 +111,23 @@ except FileNotFoundError:
     st.stop()
 
 selected_rows = st.multiselect(
-    "Selecciona los docentes",
+    "👥 Selecciona los docentes",
     df.index,
     format_func=lambda i: f"{df.loc[i, 'NOMBRE (S)']} {df.loc[i, 'APELLIDO PATERNO']} {df.loc[i, 'APELLIDO MATERNO']}"
 )
 
 if selected_rows:
-    st.write("Docentes seleccionados:")
+    st.write("✅ Docentes seleccionados:")
     st.write(df.loc[selected_rows])
 
 # Campos de entrada
-num_oficio = st.text_input("Número de Oficio")
-sede = st.text_input("Sede")
-ubicacion = st.text_input("Ubicación")
-fecha_comision = st.date_input("Fecha de Comisión")
-horario = st.text_input("Horario")
-fecha_emision = st.date_input("Fecha de Emisión")
-comision = st.text_input("Comisión")
+num_oficio = st.text_input("📄 Número de Oficio")
+sede = st.text_input("🏫 Sede")
+ubicacion = st.text_input("📍 Ubicación")
+fecha_comision = st.date_input("📅 Fecha de Comisión")
+horario = st.text_input("🕒 Horario")
+fecha_emision = st.date_input("📅 Fecha de Emisión")
+comision = st.text_input("🔖 Comisión")
 
 # Botón para generar oficios
 if st.button("Generar Oficios"):
@@ -149,9 +153,9 @@ if st.button("Generar Oficios"):
             formatear_fecha(fecha_emision),
         )
         zip_buffer = comprimir_archivos(docx_files)
-        st.success("Oficios generados con éxito. Descárgalos a continuación:")
+        st.success("🎉 Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
-            label="Descargar Oficios (ZIP)",
+            label="📂 Descargar Oficios (ZIP)",
             data=zip_buffer,
             file_name="Oficios_Generados.zip",
             mime="application/zip",
@@ -161,10 +165,8 @@ if st.button("Generar Oficios"):
 if os.path.exists(REGISTRO_PATH):
     with open(REGISTRO_PATH, "rb") as registro:
         st.download_button(
-            label="Descargar Registro de Oficios",
+            label="📊 Descargar Registro de Oficios",
             data=registro,
             file_name="registro_oficios_comision.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-
-
