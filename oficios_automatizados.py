@@ -10,13 +10,12 @@ from io import BytesIO
 TEMPLATE_PATH = "001 OFICIO ciclo escolar 2024-2025.docx"
 EXCEL_PATH = "PLANTILLA 29D AUDITORIA.xlsx"
 OUTPUT_FOLDER_BASE = "output_oficios"
-REGISTRO_PATH = "registro_oficios_comision.xlsx"
 
 # Crear carpeta de salida si no existe
 if not os.path.exists(OUTPUT_FOLDER_BASE):
     os.makedirs(OUTPUT_FOLDER_BASE)
 
-# Función para convertir la fecha al formato deseado
+# Función para formatear fechas en formato extendido
 def formatear_fecha(fecha):
     meses = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -124,16 +123,3 @@ if st.button("Generar Oficios"):
             file_name="oficios_comprimidos.zip",
             mime="application/zip"
         )
-
-        # Guardar en una carpeta específica del PC
-        guardar_local = st.checkbox("Guardar oficios en carpeta local")
-        if guardar_local:
-            destino_local = st.text_input("🖥️ Carpeta de destino (ejemplo: C:/OficiosGenerados):")
-            if st.button("Guardar en Carpeta"):
-                try:
-                    for archivo in archivos_generados:
-                        os.rename(archivo, os.path.join(destino_local, os.path.basename(archivo)))
-                    st.success(f"Archivos guardados en: {destino_local}")
-                except Exception as e:
-                    st.error(f"Error al guardar los archivos: {e}")
-
