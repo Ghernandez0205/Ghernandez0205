@@ -16,8 +16,19 @@ OUTPUT_FOLDER_BASE = "output_oficios"
 if not os.path.exists(OUTPUT_FOLDER_BASE):
     os.makedirs(OUTPUT_FOLDER_BASE)
 
+# Función para convertir la fecha al formato deseado
+def formatear_fecha(fecha):
+    meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+    dia = fecha.day
+    mes = meses[fecha.month - 1]
+    anio = fecha.year
+    return f"{dia} de {mes} del {anio}"
+
 # Función para generar archivos Word individuales
-def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emision, comision):
+def generar_oficios(data, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision):
     docx_files = []
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_folder = os.path.join(OUTPUT_FOLDER_BASE, f'Oficios_{timestamp}')
@@ -41,9 +52,9 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
             para.text = para.text.replace("rfc", rfc)
             para.text = para.text.replace("sede", sede)
             para.text = para.text.replace("ubicacion", ubicacion)
-            para.text = para.text.replace("fecha", fecha)
+            para.text = para.text.replace("fecha", formatear_fecha(fecha_comision))
             para.text = para.text.replace("horario", horario)
-            para.text = para.text.replace("fecha_emision", fecha_emision)
+            para.text = para.text.replace("fecha_emision", formatear_fecha(fecha_emision))
             para.text = para.text.replace("comision", comision)
 
         # Guardar el archivo Word
@@ -55,14 +66,11 @@ def generar_oficios(data, num_oficio, sede, ubicacion, fecha, horario, fecha_emi
 
 # Función para registrar los oficios generados en Excel
 def registrar_oficios(fecha_actividad, docentes, actividad, fecha_emision):
-    # Verificar si el registro ya existe
     if os.path.exists(REGISTRO_PATH):
         registro_df = pd.read_excel(REGISTRO_PATH)
     else:
-        # Crear un archivo nuevo si no existe
         registro_df = pd.DataFrame(columns=["Fecha de Actividad", "Docentes", "Actividad", "Fecha de Emisión"])
 
-    # Registrar la nueva entrada
     nueva_entrada = {
         "Fecha de Actividad": fecha_actividad,
         "Docentes": ", ".join(docentes),
@@ -71,7 +79,6 @@ def registrar_oficios(fecha_actividad, docentes, actividad, fecha_emision):
     }
     registro_df = pd.concat([registro_df, pd.DataFrame([nueva_entrada])], ignore_index=True)
 
-    # Guardar el registro actualizado
     registro_df.to_excel(REGISTRO_PATH, index=False)
 
 # Función para comprimir los archivos en un ZIP
@@ -84,7 +91,7 @@ def comprimir_archivos(archivos):
     return buffer
 
 # Interfaz en Streamlit
-st.title("Generador de Oficios en Word y Registro Dinámico")
+st.title("Generador de Oficios en Word con Fechas Formateadas")
 
 # Verificar contraseña
 password = st.text_input("Ingrese la contraseña", type="password")
@@ -113,17 +120,15 @@ if selected_rows:
 num_oficio = st.text_input("Número de Oficio")
 sede = st.text_input("Sede")
 ubicacion = st.text_input("Ubicación")
-fecha = st.date_input("Fecha de Comisión")
+fecha_comision = st.date_input("Fecha de Comisión")
 horario = st.text_input("Horario")
-fecha_emision = st.text_input("Fecha de Emisión (por ejemplo: 15 de enero del 2025)", placeholder="15 de enero del 2025")
+fecha_emision = st.date_input("Fecha de Emisión")
 comision = st.text_input("Comisión")
 
 # Botón para generar oficios
 if st.button("Generar Oficios"):
     if not selected_rows:
         st.warning("Por favor selecciona al menos un docente.")
-    elif not fecha_emision.strip():
-        st.warning("Por favor ingresa una fecha de emisión válida.")
     else:
         data_to_process = df.loc[selected_rows]
         docentes = df.loc[selected_rows, "NOMBRE (S)"].tolist()
@@ -132,12 +137,17 @@ if st.button("Generar Oficios"):
             num_oficio,
             sede,
             ubicacion,
-            fecha.strftime("%d/%m/%Y"),
+            fecha_comision,
             horario,
-            fecha_emision.strip(),
+            fecha_emision,
             comision,
         )
-        registrar_oficios(fecha.strftime("%d/%m/%Y"), docentes, comision, fecha_emision.strip())
+        registrar_oficios(
+            formatear_fecha(fecha_comision),
+            docentes,
+            comision,
+            formatear_fecha(fecha_emision),
+        )
         zip_buffer = comprimir_archivos(docx_files)
         st.success("Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
