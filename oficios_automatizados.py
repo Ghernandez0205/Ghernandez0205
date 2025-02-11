@@ -35,7 +35,7 @@ def generar_oficio(data, num_oficio, sede, ubicacion, fecha_comision, horario, m
         # Reemplazar texto en la plantilla
         for p in doc.paragraphs:
             p.text = p.text.replace("mes", mes_emision)
-            p.text = p.text.replace("fecha", fecha_comision.strftime('%d/%m/%Y'))
+            p.text = p.text.replace("fecha", fecha_comision.strftime('%d de %B de %Y').replace('January', 'enero').replace('February', 'febrero').replace('March', 'marzo').replace('April', 'abril').replace('May', 'mayo').replace('June', 'junio').replace('July', 'julio').replace('August', 'agosto').replace('September', 'septiembre').replace('October', 'octubre').replace('November', 'noviembre').replace('December', 'diciembre'))
             p.text = p.text.replace("numero_oficio", num_oficio)
             p.text = p.text.replace("nombre", nombre)
             p.text = p.text.replace("apellido_paterno", apellido_paterno)
@@ -140,4 +140,3 @@ if st.button("Generar Oficios"):
             file_name="historial_oficios.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
