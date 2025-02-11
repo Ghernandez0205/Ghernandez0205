@@ -9,25 +9,15 @@ from io import BytesIO
 # Configuración de rutas
 TEMPLATE_PATH = "001 OFICIO ciclo escolar 2024-2025.docx"
 EXCEL_PATH = "PLANTILLA 29D AUDITORIA.xlsx"
+HISTORIAL_PATH = "historial_oficios.xlsx"
 OUTPUT_FOLDER_BASE = "output_oficios"
 
 # Crear carpeta de salida si no existe
 if not os.path.exists(OUTPUT_FOLDER_BASE):
     os.makedirs(OUTPUT_FOLDER_BASE)
 
-# Función para convertir la fecha al formato deseado
-def formatear_fecha(fecha):
-    meses = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ]
-    dia = fecha.day
-    mes = meses[fecha.month - 1]
-    anio = fecha.year
-    return f"{dia} de {mes} del {anio}"
-
 # Función para generar oficios
-def generar_oficio(data, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision):
+def generar_oficio(data, num_oficio, sede, ubicacion, fecha_comision, horario, mes_emision, comision):
     archivos_generados = []
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_folder = os.path.join(OUTPUT_FOLDER_BASE, f'Oficios_{timestamp}')
@@ -44,8 +34,8 @@ def generar_oficio(data, num_oficio, sede, ubicacion, fecha_comision, horario, f
 
         # Reemplazar texto en la plantilla
         for p in doc.paragraphs:
-            p.text = p.text.replace("fecha_emision", formatear_fecha(fecha_emision))
-            p.text = p.text.replace("fecha", formatear_fecha(fecha_comision))
+            p.text = p.text.replace("mes", mes_emision)
+            p.text = p.text.replace("fecha", fecha_comision.strftime('%d de %B del %Y'))
             p.text = p.text.replace("numero_oficio", num_oficio)
             p.text = p.text.replace("nombre", nombre)
             p.text = p.text.replace("apellido_paterno", apellido_paterno)
@@ -71,6 +61,24 @@ def comprimir_archivos(archivos):
             zipf.write(archivo, os.path.basename(archivo))
     zip_buffer.seek(0)
     return zip_buffer
+
+# Función para actualizar el historial de oficios
+def actualizar_historial(data, num_oficio, comision):
+    historial_df = pd.DataFrame()
+    if os.path.exists(HISTORIAL_PATH):
+        historial_df = pd.read_excel(HISTORIAL_PATH)
+    
+    nuevo_historial = pd.DataFrame({
+        "Número Consecutivo": [len(historial_df) + i + 1 for i in range(len(data))],
+        "Nombre": data['NOMBRE (S)'].values,
+        "Apellido Paterno": data['APELLIDO PATERNO'].values,
+        "Apellido Materno": data['APELLIDO MATERNO'].values,
+        "Número de Oficio": [num_oficio] * len(data),
+        "Actividad": [comision] * len(data)
+    })
+    
+    historial_df = pd.concat([historial_df, nuevo_historial], ignore_index=True)
+    historial_df.to_excel(HISTORIAL_PATH, index=False)
 
 # Interfaz en Streamlit
 st.set_page_config(page_title="Generador de Oficios", page_icon="📄")
@@ -104,8 +112,8 @@ num_oficio = st.text_input("📄 Número de Oficio")
 sede = st.text_input("🏫 Sede")
 ubicacion = st.text_input("📍 Ubicación")
 fecha_comision = st.date_input("📅 Fecha de Comisión")
+mes_emision = st.text_input("📆 Mes de Emisión")
 horario = st.text_input("🕒 Horario")
-fecha_emision = st.date_input("📅 Fecha de Emisión")
 comision = st.text_input("🔖 Comisión")
 
 # Botón para generar oficios
@@ -115,8 +123,9 @@ if st.button("Generar Oficios"):
     else:
         data_to_process = df.loc[selected_rows]
         archivos_generados = generar_oficio(
-            data_to_process, num_oficio, sede, ubicacion, fecha_comision, horario, fecha_emision, comision
+            data_to_process, num_oficio, sede, ubicacion, fecha_comision, horario, mes_emision, comision
         )
+        actualizar_historial(data_to_process, num_oficio, comision)
         zip_buffer = comprimir_archivos(archivos_generados)
         st.success("🎉 Oficios generados con éxito. Descárgalos a continuación:")
         st.download_button(
@@ -124,4 +133,10 @@ if st.button("Generar Oficios"):
             data=zip_buffer,
             file_name="oficios_comprimidos.zip",
             mime="application/zip"
+        )
+        st.download_button(
+            label="📥 Descargar Historial de Oficios",
+            data=open(HISTORIAL_PATH, "rb"),
+            file_name="historial_oficios.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
